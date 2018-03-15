@@ -1,0 +1,67 @@
+---
+title: "MA_712_HW3"
+output: html_notebook
+---
+
+by: Randy Cruz
+
+
+```{r}
+library(maxLik)
+library(Zelig)
+```
+
+
+```{r}
+data("turnout")
+turnout
+```
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+eduinc <- turnout%>%
+  group_by(educate)%>%
+  summarize(avincome=mean(income), n = n(), totalinc = sum(income))%>%
+  mutate(percent = n/sum(n))
+```
+
+#Income In Relation to Education
+Higher levels of education led to higher average of household Income.
+
+```{r}
+ggplot(eduinc)+
+  geom_col(aes(x = educate, y = avincome), color= "Aqua Marine1", fill= "Orange")
+```
+
+#Income X Age Relationship
+Ages 25 and 50 had higher reports of income. However, those who were 50+ displayed lower levels of income.
+
+```{r}
+ggplot(turnout)+
+  geom_point(aes(x = age, y = income), color= "Orange") + geom_smooth(aes(x = age, y = income), color= "Aqua Marine1")
+```
+
+# Maximum Likelihood Estimation - Education X Age X Income
+Overall, the analysis displays that age and education have a positive relationship with income. The MaxLik function adds to the analysis as it portrays for every 1 unit of education income goes up by (theta2).133. In addition, for every 1 unit of age, income increased by (theta3).017.
+
+
+
+```{r, message=FALSE, warning=FALSE}
+ols.lf2 <- function(param) {
+  mu <- param[1]
+  theta <- param[-1]
+  y <- as.vector(turnout$income)
+  x <- cbind(1, turnout$educate, turnout$age)
+  sigma <- x%*%theta
+  sum(dnorm(y, mu, sigma, log = TRUE))
+}    
+
+print(ols.lf2)
+
+mle_ols2 <- maxLik(logLik = ols.lf2, start = c(mu = 1, theta1 = 1, theta2 = 1, theta3 = 1), method= "bfgs")
+summary(mle_ols2)
+```
+
